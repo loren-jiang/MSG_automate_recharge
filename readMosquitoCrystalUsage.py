@@ -9,12 +9,15 @@ class UserException(Exception):
 while True:
     try:
         filename = askopenfilename(initialdir = 'C:/Users/ljiang/Google Drive/UCSF_XTAL',
-            title = "Select file (.csv or .tsv only)")
+            title = "Select file (.csv or .tsv or .txt only)")
         path = filename #change to file name
 
         if not(filename): # empty file name occurs when user tries to close input window
             raise SystemExit()
         elif filename.endswith('.tsv'):
+            df = pd.read_csv(path, delimiter="\t")
+            break
+        elif filename.endswith('.txt'):
             df = pd.read_csv(path, delimiter="\t")
             break
         elif filename.endswith('.csv'):

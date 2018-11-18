@@ -17,6 +17,9 @@ while True:
         elif filename.endswith('.tsv'):
             df = pd.read_csv(path, delimiter="\t")
             break
+        elif filename.endswith('.txt'):
+            df = pd.read_csv(path, delimiter="\t")
+            break
         elif filename.endswith('.csv'):
             df = pd.read_csv(path, delimiter=",")
             break
@@ -46,5 +49,7 @@ print(100*usageByPI/usageSum) #percent usage
 # labels = usageByPI.index
 # usageByPI.plot.pie(figsize=(6, 6), labels=labels, autopct='%1.0f%%')
 # plt.show()
-groupedByYear = df.groupby(df.index.year)
-groupedByMonth = df.groupby(pd.Grouper(freq="M"))
+usageByMonthByPI = df.groupby([pd.Grouper(freq="M"),'Group']).sum()
+usageByYearByPI = df.groupby([df.index.year,'Group']).sum()
+# usageByMonthByPI.xs('Minor', level = 1)
+
