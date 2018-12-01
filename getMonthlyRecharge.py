@@ -1,4 +1,4 @@
-import getScreenOrders, getRockImagerUsage, getMosquitoCrystalUsage, getGL#, getDragonyflyUsage
+import getRockImagerUsage, getMosquitoCrystalUsage, getGL#, getDragonyflyUsage
 import pandas as pd
 import sys
 import matplotlib.pyplot as plt

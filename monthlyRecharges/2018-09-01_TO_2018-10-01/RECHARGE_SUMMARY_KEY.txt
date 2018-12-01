@@ -1,0 +1,18 @@
+RECHARGE_SUMMARY_KEY
+
+Screens Total Cost --> The total cost of crystallization screens purchased on Quartzy. See "[PI_Name]/ScreenOrders.xlsx" for details.
+
+Mosquito Total Cost --> The total cost of usage for both Mosquito robots (which includes consumables, time, projected cost of repair). See "[PI_Group]/mosquitoUsage.xslx" for details.
+
+RockImager Total Cost --> The total cost of usage for both RockImager machines (which includes consumables, time, projected cost of repair). See "[PI_Group]/rockImagerUsage.xslx" for details. 
+
+DFly Total Cost --> The total cost of usage for Dragonfly robot (which includes consumables, time, projected cost of repair). See "[PI_Group]/dragonflyUsage.xslx" for details. 
+
+Usage prop --> The proportion of facility usage for given PI group for the given date range, based off aggregate usage time for all equipment divided by total usage time of all groups.
+
+Dist Cost --> The total cost of facility expenses considered as "distributed" (which includes N2 tanks, employee salary/benefits, etc., but does NOT include consumables on a per-use basis) multipled by "Usage prop." See General Ledger and DPE Excel files for details. 
+
+Use Multiplier --> A multiplier applied to the cost of equipment usage (Mosquito, RockImager, Dragonfly), based off PI recharge type (CORE, ASSOCIATE, REGULAR).
+
+Total Charge --> 'Screens Total Cost' + ('Mosquito Total Cost' + 'RockImager Total Cost' + 'DFly Total Cost' + 'Dist Cost') x 'Use Multiplier' 
+
