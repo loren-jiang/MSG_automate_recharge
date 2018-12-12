@@ -56,7 +56,10 @@ def clean_DF_Dragonfly(df):
 # obtain PI and their use_types from Google drive spreadsheet
 def getPITypes():
     wks_groups = gc.open_by_key('1Yom-H6j04TJ5_W1Ic2dlqKsVWrHQbdInQyq_Q7ZVnZA').sheet1
-    row_data = wks_groups.get_all_values(include_empty=False)
+    print(wks_groups.title)
+    row_data = wks_groups.get_all_values(include_tailing_empty=False,include_tailing_empty_rows=False)
+
+    print(row_data) 
     coreUsers = []
     associateUsers = []
     regUsers = []
@@ -93,7 +96,7 @@ def getScreenOrders():
 
     while True:
         try:
-            filename = askopenfilename(initialdir = 'C:/Users/ljiang/Google Drive/UCSF_XTAL/MSG_recharge_automation/screenOrders',
+            filename = askopenfilename(initialdir = 'C:/Users/loren/Documents/ucsf_sra/msg_recharge_automation/screenOrders',
                 title = "Select screenOrders file (.csv or .tsv only)")
             path = filename #change to file name
 
@@ -128,7 +131,7 @@ def getRockImagerUsage():
     # Read from RockImagers usage log file
     while True:
         try:
-            filename = askopenfilename(initialdir = 'C:/Users/ljiang/Google Drive/UCSF_XTAL/MSG_recharge_automation/rockImagerLogs',
+            filename = askopenfilename(initialdir = 'C:/Users/loren/Documents/ucsf_sra/msg_recharge_automation/rockImagerLogs',
                 title = "Select rockImagerUsage file (.csv or .tsv only)")
             path = filename #change to file name
 
@@ -161,8 +164,11 @@ def getRockImagerUsage():
     return df
 
 def getGL():
-    consumableForScreens = ['vwr','rigaku','qiagen','ttp labtech','molecular dimensions','e&k','anatrace','hampton research']
-    managerSalaryBenefits = ['loren']
+    amortizedExpenses = ['voucher']
+    monthlyExpenses = ['recharge']
+    payroll = ['payroll']
+    # amortizedExpenses = ['vwr','rigaku','qiagen','ttp labtech','molecular dimensions','e&k','anatrace','hampton research','formulatrix']
+    # managerSalaryBenefits = ['loren']
     # checks if strings of lst1 is a substring of any string in lst2 and returns array of bool
     def substringInListOfStrings(x,lst):
         for s in lst:
@@ -173,8 +179,8 @@ def getGL():
     # Read from GL (general ledger) file
     while True:
         try:
-            filename = askopenfilename(initialdir = 'C:/Users/ljiang/Google Drive/UCSF_XTAL/MSG_recharge_automation/GL')
-            title = "Select file (.csv or .tsv only)"
+            filename = askopenfilename(initialdir = 'C:/Users/loren/Documents/ucsf_sra/msg_recharge_automation/GL')
+            title = "Select Recharge file (.csv or .tsv only)"
             path = filename #change to file name
 
             if not(filename): # empty file name occurs when user tries to close input window
@@ -192,12 +198,12 @@ def getGL():
 
     # MAIN SCRIPT BELOW
     print("\nSelected:\n" + filename +"\n")
+    df.columns = df.columns.str.replace(' ', '')
 
-    df.index = pd.to_datetime(df.pop(' Ldgr Post Date'))
-
-    df['Recharge Category'] = df['  Description'].apply(lambda s: 'consumableScreen' 
-        if substringInListOfStrings(str(s).lower(), consumableForScreens) else ('managerSalaryBenefits' 
-            if substringInListOfStrings(str(s).lower(), managerSalaryBenefits) else 'distributedExpense'))
+    df.index = pd.to_datetime(df.pop('JrnlDate'))
+    df['Recharge Category'] = df['TrnsTyp'].apply(lambda s: 'amortizedExpenses' 
+        if substringInListOfStrings(str(s).lower(), amortizedExpenses) else ('payroll' 
+            if substringInListOfStrings(str(s).lower(), payroll) else 'monthlyExpenses'))
 
     return df
 # Make the output files more Excel friendly
@@ -336,13 +342,22 @@ def calculateRecharge(dfs,date_range):
     rawUsagePercent = a1.apply(lambda x: x['Raw Usage'] / x['Raw Usage'].sum())
     monthlyRechargeTotal['Usage prop'] = pd.Series.ravel(rawUsagePercent)
 
-    df_GL=df_GL[df_GL['Recharge Category'] == 'distributedExpense'].groupby(
+    df_GL_monthlyExpenses=df_GL[df_GL['Recharge Category'] == 'monthlyExpenses'].groupby(
         [pd.Grouper(freq="M")]).sum().loc[start_date:end_date]
-    lst = []
-    for index, row in monthlyRechargeTotal.iterrows():
-        lst.append(row['Usage prop'] * df_GL.loc[index[0]][' Actual'])
 
-    monthlyRechargeTotal['Dist Cost'] = lst  #distributed costs include everything except pay-per-use consumables and base salary/benefits
+    df_GL_payroll = df_GL[df_GL['Recharge Category'] == 'payroll'].groupby(
+        [pd.Grouper(freq="M")]).sum().loc[start_date:end_date]
+
+    lst_monthlyExpenses = []
+    lst_payroll = []
+    for index, row in monthlyRechargeTotal.iterrows():
+        lst_monthlyExpenses.append(row['Usage prop'] * df_GL_monthlyExpenses.loc[index[0]]['Actual'])
+
+    for index, row in monthlyRechargeTotal.iterrows():
+        lst_payroll.append(row['Usage prop'] * df_GL_payroll.loc[index[0]]['Actual'])
+
+    monthlyRechargeTotal['Month Dist. Cost'] = lst_monthlyExpenses  #distributed costs include everything except pay-per-use consumables and base salary/benefits
+    monthlyRechargeTotal['Payroll Cost'] = lst_payroll #payroll costs for that month
     monthlyRechargeTotal['Use Multiplier'] = regMult
 
     # Set Use Multiplier column for Core and Assoc users
@@ -351,13 +366,14 @@ def calculateRecharge(dfs,date_range):
     monthlyRechargeTotal.loc[((monthlyRechargeTotal.index.levels[0],
         associateUsers),'Use Multiplier')] = assocMult
 
-    monthlyRechargeTotal['Total Charge'] = (monthlyRechargeTotal['Dist Cost'] 
+    monthlyRechargeTotal['Total Charge'] = (monthlyRechargeTotal['Month Dist. Cost'] 
         + monthlyRechargeTotal['Mosquito Total Cost'] + monthlyRechargeTotal['RockImager Total Cost']
         + monthlyRechargeTotal['DFly Total Cost'])\
-        *monthlyRechargeTotal['Use Multiplier'] + monthlyRechargeTotal['Screens Total Cost']
+        *monthlyRechargeTotal['Use Multiplier'] + monthlyRechargeTotal['Screens Total Cost'] \
+        + monthlyRechargeTotal['Payroll Cost']
 
     outSummary = monthlyRechargeTotal[['Screens Total Cost','Mosquito Total Cost','RockImager Total Cost', 'DFly Total Cost',
-    'Usage prop','Dist Cost','Use Multiplier','Total Charge']]
+    'Raw Usage','Usage prop','Month Dist. Cost','Payroll Cost','Use Multiplier','Total Charge']]
     outSummary.index.set_names(names='Group',level=1,inplace=True)
 
     outSummary = outSummary.sort_index(ascending=False)
