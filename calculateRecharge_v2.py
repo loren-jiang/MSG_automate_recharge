@@ -10,10 +10,14 @@ from tkinter.filedialog import askopenfilename
 class UserException(Exception):
     pass
 
-def clean_DF_MosquitoCrystal(df):
+def clean_DF_MosquitoCrystal(df,dates):
+    start_date, end_date = dates
+
     # Rename columns to make easier to read, NEED TO CHANGE IF CHANGES MADE IN GOOGLE FORM
     df.rename(columns={'How many tips did you use in total?':'Mosq Tips',
         'How many plates did you set up?':'Mosq Plates Set-up',
+        'How many sitting drop plates did you set up? (Enter 0 if none)' : 'NumSDP',
+        'How many hanging drop plates did you set up? (Enter 0 if none)' : 'NumHDP',
         'What is your name?':'Name',
         'Which lab are you from?':'Group',
         'Did you use your own plates or those from the common supply?':'Source of plates',
@@ -24,17 +28,57 @@ def clean_DF_MosquitoCrystal(df):
         'How long did you use the Mosquito? (1 hr and 15 min → 1.25)':'Mosq Dur (hr)'}, inplace=True)
     # Look at 'Time' column and convert to datetime type
     # df.index = pd.to_datetime(df.pop('What day did you use the Mosquito?')) # Change index to datetime index
-    df.index = pd.to_datetime(df.pop('Timestamp')) # Change index to datetime index
-    df['Mosq Tips'] = pd.to_numeric(df['Mosq Tips'], errors='coerce') # convert objects to numeric
-    df['Mosq Plates Set-up'] = pd.to_numeric(df['Mosq Plates Set-up'], errors='coerce') # convert objects to numeric
-    df.dropna(subset=['Group', 'Mosq Plates Set-up', 'Mosq Tips'], inplace=True) # Removes rows in the labels subset that are NaN
+    df.index = pd.to_datetime(df.pop('Timestamp'))
+    df = df[df.index.notnull()]
+    mask = (df.index > start_date) & (df.index <= end_date)
+    # df = df.loc[start_date:end_date]
+    df = df.loc[mask]
+    df['Mosq Tips'] = pd.to_numeric(df['Mosq Tips'], errors='coerce').fillna(0) # convert objects to numeric
+    df['NumSDP'] = pd.to_numeric(df['NumSDP'], errors='coerce').fillna(0) # convert objects to numeric
+    df['NumHDP'] = pd.to_numeric(df['NumHDP'], errors='coerce').fillna(0) # convert objects to numeric
+    df['Mosq Dur (hr)'] = pd.to_numeric(df['Mosq Dur (hr)'], errors='coerce').fillna(0) # convert objects to numeric
+    
+    # df.dropna(subset=['Group', 'Mosq Plates Set-up', 'Mosq Tips'], inplace=True) # Removes rows in the labels subset that are NaN
+    print(df)
     return df
     
-#TO BE IMPLEMENTED LATER
-def clean_DF_MosquitoLCP(df):
+def clean_DF_MosquitoLCP(df,dates):
+    start_date, end_date = dates
+
+    # Rename columns to make easier to read, NEED TO CHANGE IF CHANGES MADE IN GOOGLE FORM
+    df.rename(columns={'How many tips did you use in total?':'Mosq Tips',
+        'How many LCP plates did you set up?':'Mosq LCP Plates Set-up',
+        'How many sitting drop plates did you set up? (Enter 0 if none)' : 'NumSDP',
+        'How many hanging drop plates did you set up? (Enter 0 if none)' : 'NumHDP',
+        'What is your name?':'Name',
+        'Which lab are you from?':'Group',
+        'What day did you use the Mosquito LCP?':'Self-report use date',
+        'Which protocol did you use?':'Mosq Protocol Used',
+        'Was this a training session?':'Training sesh?',
+        'Did you park the Mosquito in position #3 and put everything back into the drawer after you were finished?':'Cleaned-up?',
+        'How long did you use the Mosquito LCP? (1 hr and 15 min → 1.25)':'Mosq Dur (hr)'}, inplace=True)
+
+    df.index = pd.to_datetime(df.pop('Timestamp'))
+    df = df[df.index.notnull()]
+    mask = (df.index > start_date) & (df.index <= end_date)
+    # df = df.loc[start_date:end_date]
+    df = df.loc[mask]
+
+    # convert columns to numeric values as they should be
+    df['Mosq LCP Plates Set-up'] = pd.to_numeric(df['Mosq LCP Plates Set-up'], errors='coerce')
+    df['NumSDP'] = pd.to_numeric(df['NumSDP'], errors='coerce').fillna(0)
+    df['NumHDP'] = pd.to_numeric(df['NumHDP'], errors='coerce').fillna(0)
+    a = pd.to_numeric(df['Mosq Tips'].ix[:,0], errors='coerce').fillna(0)
+    b = pd.to_numeric(df['Mosq Tips'].ix[:,1], errors='coerce').fillna(0)
+    df['Cum Mosq Tips'] = a.add(b)
+
+    print(df)
+    # df.dropna(subset=['Group', 'Mosq Plates Set-up', 'Mosq Tips'], inplace=True) # Removes rows in the labels subset that are NaN
     return df
 
-def clean_DF_Dragonfly(df):
+def clean_DF_Dragonfly(df,dates):
+    start_date, end_date = dates
+
     df.rename(columns={
         'What lab are you from?' : 'Group',
         'What is your name?' : 'Name',
@@ -45,21 +89,25 @@ def clean_DF_Dragonfly(df):
         'How many NEW plates did you use?' : 'DFly New Plates',
         # 'How many screens did you set up?' : 'DFly New Plates Set-up'
         }, inplace=True)
-    df.index = pd.to_datetime(df.pop('Timestamp')) # Change index to datetime index
+    df.index = pd.to_datetime(df.pop('Timestamp'))
+    df = df[df.index.notnull()]
+    mask = (df.index > start_date) & (df.index <= end_date)
+    # df = df.loc[start_date:end_date]
+    df = df.loc[mask]
+
     df['DFly New Tips'] = pd.to_numeric(df['DFly New Tips'], errors='coerce').fillna(0) # convert objects to numeric
     df['DFly New Reservoirs'] = pd.to_numeric(df['DFly New Reservoirs'], errors='coerce').fillna(0) # convert objects to numeric
     df['DFly New Mixers'] = pd.to_numeric(df['DFly New Mixers'], errors='coerce').fillna(0) # convert objects to numeric
     df['DFly New Plates'] = pd.to_numeric(df['DFly New Plates'], errors='coerce').fillna(0) # convert objects to numeric
     # df['DFly New Plates Set-up'] = pd.to_numeric(df['DFly New Plates Set-up'], errors='coerce').fillna(value=0,inplace=True) # convert objects to numeric
+    print(df)
     return df
 
 # obtain PI and their use_types from Google drive spreadsheet
 def getPITypes():
     wks_groups = gc.open_by_key('1Yom-H6j04TJ5_W1Ic2dlqKsVWrHQbdInQyq_Q7ZVnZA').sheet1
-    print(wks_groups.title)
     row_data = wks_groups.get_all_values(include_tailing_empty=False,include_tailing_empty_rows=False)
 
-    print(row_data) 
     coreUsers = []
     associateUsers = []
     regUsers = []
@@ -77,18 +125,20 @@ def getPITypes():
     return [coreUsers,associateUsers,regUsers,coreUsers + associateUsers + regUsers]
 
 # obtain usage log data from Google drive forms/spreadsheets (mosquito, mosquitoLCP, dragonfly)
-def getGDriveLogUsage():
+def getGDriveLogUsage(dates):
     df_mosquitoLCPLogRAW = gc.open_by_key('1MpwGvh6xlOb4mrn8BtJgs7Fux7hmlZRRdmhBUkhqRAY').sheet1.get_as_df()
     df_mosquitoLogRAW = gc.open_by_key('1demabrSE50t_euIpP3AhM8V64I3BQuaK1VRcNJCSJmA').sheet1.get_as_df()
     df_dragonflyLogRAW = gc.open_by_key('1JciEUj4dg1AZedcmi42InLIQs5XINQt5aaok4-vnUwg').sheet1.get_as_df()
 
-    df_mosquitoLCPLog = clean_DF_MosquitoLCP(df_mosquitoLCPLogRAW)
-    df_mosquitoLog = clean_DF_MosquitoCrystal(df_mosquitoLogRAW)
-    df_dragonflyLog = clean_DF_Dragonfly(df_dragonflyLogRAW)
+    df_mosquitoLCPLog = clean_DF_MosquitoLCP(df_mosquitoLCPLogRAW,dates)
+    df_mosquitoLog = clean_DF_MosquitoCrystal(df_mosquitoLogRAW,dates)
+    df_dragonflyLog = clean_DF_Dragonfly(df_dragonflyLogRAW,dates)
 
     return [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog]
 
-def getScreenOrders():
+def getScreenOrders(dates):
+    start_date, end_date = dates
+
     def removeBadChar(x):
         if isinstance(x, str):
             x=x.replace('"','').replace('=','')
@@ -124,10 +174,17 @@ def getScreenOrders():
         "Total Price":"Screens Total Cost"}
         ,inplace=True)
     df.index = pd.to_datetime(df.pop('Date Requested')) # Change index to datetime index
+    df = df[df.index.notnull()]
+    mask = (df.index > start_date) & (df.index <= end_date)
+    # df = df.loc[start_date:end_date]
+    df = df.loc[mask]
     df.sort_values(['Group'],inplace=True)
+    print(df)
     return df
 
-def getRockImagerUsage():
+def getRockImagerUsage(dates):
+    start_date, end_date = dates
+
     # Read from RockImagers usage log file
     while True:
         try:
@@ -161,9 +218,15 @@ def getRockImagerUsage():
 
     # Look at 'Time' column and convert to datetime type
     df.index = pd.to_datetime(df.pop('Time')) # Change index to datetime index
+    df = df[df.index.notnull()]
+    mask = (df.index > start_date) & (df.index <= end_date)
+    # df = df.loc[start_date:end_date]
+    df = df.loc[mask]
     return df
 
-def getGL():
+def getGL(dates):
+    start_date, end_date = dates
+
     amortizedExpenses = ['voucher']
     monthlyExpenses = ['recharge']
     payroll = ['payroll']
@@ -201,6 +264,10 @@ def getGL():
     df.columns = df.columns.str.replace(' ', '')
 
     df.index = pd.to_datetime(df.pop('JrnlDate'))
+    df = df[df.index.notnull()]
+    mask = (df.index > start_date) & (df.index <= end_date)
+    # df = df.loc[start_date:end_date]
+    df = df.loc[mask]
     df['Recharge Category'] = df['TrnsTyp'].apply(lambda s: 'amortizedExpenses' 
         if substringInListOfStrings(str(s).lower(), amortizedExpenses) else ('payroll' 
             if substringInListOfStrings(str(s).lower(), payroll) else 'monthlyExpenses'))
@@ -321,7 +388,7 @@ def calculateRecharge(dfs,date_range):
 
 
     # Extract relevant data from df_mosquitoLog in the given date range
-    wantedMosqCol = ['Name','Mosq Plates Set-up','Mosq Protocol Used','Mosq Tips','Mosq Dur (hr)']
+    wantedMosqCol = ['Name','NumHDP','NumSDP','Mosq Protocol Used','Mosq Tips','Mosq Dur (hr)']
 
     mosqUsageMonthByPI = df_mosquitoLog.groupby([pd.Grouper(freq="M"),'Group'])
     mosqCrystalUsageYearByPI = df_mosquitoLog.groupby([df_mosquitoLog.index.year,'Group'])
@@ -329,22 +396,23 @@ def calculateRecharge(dfs,date_range):
         len(x.index)))[wantedMosqCol].loc[start_date:end_date]
 
     #finds the type of protocol used (sitting or hanging) and assigns approp. cost/plate
-    itemizedMosqCryMonthByPI['Cost/plate'] = itemizedMosqCryMonthByPI['Mosq Protocol Used'].apply(lambda x: 
-        costHDSConsume if x.find('sitting')>0 else costSDSConsume)
+    # itemizedMosqCryMonthByPI['Cost/plate'] = itemizedMosqCryMonthByPI['Mosq Protocol Used'].apply(lambda x: 
+    #     costHDSConsume if x.find('sitting')>0 else costSDSConsume)
 
     itemizedMosqCryMonthByPI['Cost/tip'] = costMosqTip
 
     itemizedMosqCryMonthByPI['Mosquito Total Cost'] = costMosqTip*itemizedMosqCryMonthByPI['Mosq Tips'] \
-    + itemizedMosqCryMonthByPI['Cost/plate']*itemizedMosqCryMonthByPI['Mosq Plates Set-up'] #needs to be changed eventually 
+    + costHDSConsume*itemizedMosqCryMonthByPI['NumHDP'] + costSDSConsume*itemizedMosqCryMonthByPI['NumSDP'] #needs to be changed eventually 
 
     itemizedMosqCryMonthByPI=itemizedMosqCryMonthByPI.iloc[::-1] #reverse index (descending date)
 
     wantedSOCol = ['Group','Requested By','Item Name','Qty','Vendor','Unit Price','Screens Total Cost']
+    
     itemizedSOMonthByPI = df_ScreenOrders.groupby([pd.Grouper(freq="M"),'Group']).apply(lambda x: x.head(
         len(x.index)))[wantedSOCol].loc[start_date:end_date]
     itemizedSOMonthByPI = itemizedSOMonthByPI.iloc[::-1]
 
-    a = itemizedMosqCryMonthByPI.sum(level=[0,1],numeric_only=True)[['Mosq Plates Set-up','Mosq Tips','Mosquito Total Cost']]
+    a = itemizedMosqCryMonthByPI.sum(level=[0,1],numeric_only=True)[['NumHDP','NumSDP','Mosq Tips','Mosquito Total Cost']]
     b_1 = itemizedRockMonthByPI_1.sum(level=[0,1],numeric_only=True)[['Rock Dur (min)','RockImager Total Cost']]
     b_2 = itemizedRockMonthByPI_2.sum(level=[0,1],numeric_only=True)[['Rock Dur (min)','RockImager Total Cost']]
     c = itemizedSOMonthByPI.sum(level=[0,1],numeric_only=True)['Screens Total Cost']
@@ -423,23 +491,25 @@ if __name__ == '__main__':
     start_date, end_date = '', ''
     while 1:
         try:    
-            start_date = datetime.strptime(input('Enter Start date in the format m/d/yyyy: '), '%m/%d/%Y')
-            end_date = datetime.strptime(input('Enter End date in the format m/d/yyyy: '), '%m/%d/%Y')
+            start_date = datetime.strptime(input('Enter Start date in the format yyyy-m-d: '), '%Y-%m-%d')
+            end_date = datetime.strptime(input('Enter End date in the format yyyy-m-d: '), '%Y-%m-%d')
+            if (start_date>end_date):
+                raise ValueError
             break
         except ValueError as e:
-            if (e.args[0][11] == '0'):
-                sys.exit(1)
-            else:
-                print('\nWrong format or invalid date. Please try again or enter 0 to exit.')
+            print('\nInvalid date range or wrong format. Please try again or ctrl+C and ENTER to exit.')
 
+
+    dates = [str(start_date),str(end_date)]
+    print('The dates selected are: ' + dates[0] + ' to ' + dates[1])
     gc = pyg.authorize(service_file='msg-Recharge-24378e029f2d.json')
     coreUsers, associateUsers, regUsers, allUsers = getPITypes()
-    df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog = getGDriveLogUsage()
-    df_RockImager_1 = getRockImagerUsage()
-    df_RockImager_2 = getRockImagerUsage()
+    df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog = getGDriveLogUsage(dates)
+    df_RockImager_1 = getRockImagerUsage(dates)
+    df_RockImager_2 = getRockImagerUsage(dates)
 
-    df_GL = getGL()
-    df_ScreenOrders = getScreenOrders()
+    df_GL = getGL(dates)
+    df_ScreenOrders = getScreenOrders(dates)
     dfs_input = [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1,df_RockImager_2, df_GL, df_ScreenOrders]
     rechargeSummary, fileOut_lst, dfOut_lst = calculateRecharge(dfs_input,[start_date,end_date])
     directory = 'monthlyRechargesTemp/' + str(start_date)[0:10]+'_TO_'+str(end_date)[0:10] + '/'
