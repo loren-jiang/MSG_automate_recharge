@@ -2,13 +2,14 @@ import sys
 import os
 import pandas as pd 
 import pygsheets as pyg 
+import numpy as np
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 from tkinter.filedialog import askopenfilename
 
 
 class UserException(Exception):
-    pass
+    pass    
 
 def clean_DF_MosquitoCrystal(df,dates):
     start_date, end_date = dates
@@ -44,7 +45,6 @@ def clean_DF_MosquitoCrystal(df,dates):
     
 def clean_DF_MosquitoLCP(df,dates):
     start_date, end_date = dates
-
     # Rename columns to make easier to read, NEED TO CHANGE IF CHANGES MADE IN GOOGLE FORM
     df.rename(columns={'How many tips did you use in total?':'Mosq Tips',
         'How many LCP plates did you set up?':'Mosq LCP Plates Set-up',
@@ -57,7 +57,7 @@ def clean_DF_MosquitoLCP(df,dates):
         'Was this a training session?':'Training sesh?',
         'Did you park the Mosquito in position #3 and put everything back into the drawer after you were finished?':'Cleaned-up?',
         'How long did you use the Mosquito LCP? (1 hr and 15 min → 1.25)':'Mosq Dur (hr)'}, inplace=True)
-
+    
     df.index = pd.to_datetime(df.pop('Timestamp'))
     df = df[df.index.notnull()]
     mask = (df.index > start_date) & (df.index <= end_date)
@@ -113,6 +113,7 @@ def getPITypes():
     k = 1 #skip first row
     while (k < len(row_data)):
         pi, user_type = row_data[k]
+        pi = pi.lower()
         if (user_type=='regular'):
             regUsers.append(pi)
         elif (user_type=='associate'):
@@ -127,58 +128,82 @@ def getGDriveLogUsage(dates):
     df_mosquitoLCPLogRAW = gc.open_by_key('1MpwGvh6xlOb4mrn8BtJgs7Fux7hmlZRRdmhBUkhqRAY').sheet1.get_as_df()
     df_mosquitoLogRAW = gc.open_by_key('1demabrSE50t_euIpP3AhM8V64I3BQuaK1VRcNJCSJmA').sheet1.get_as_df()
     df_dragonflyLogRAW = gc.open_by_key('1JciEUj4dg1AZedcmi42InLIQs5XINQt5aaok4-vnUwg').sheet1.get_as_df()
+    df_screenOrders = gc.open_by_key('1d6GVWGwwrlh_lTKxVRI08xZSiE__Zieu3WWtwbmOMlE'
+        ).worksheet_by_title('completedOrders').get_as_df()
 
     df_mosquitoLCPLog = clean_DF_MosquitoLCP(df_mosquitoLCPLogRAW,dates)
     df_mosquitoLog = clean_DF_MosquitoCrystal(df_mosquitoLogRAW,dates)
     df_dragonflyLog = clean_DF_Dragonfly(df_dragonflyLogRAW,dates)
+    df_screenOrdersLog = clean_DF_screenOrders(df_screenOrders,dates)
+    print('inside getGDriveLogUsage(dates)')
+    print(df_screenOrdersLog.head())
+    return [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_screenOrdersLog]
 
-    return [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog]
-
-def getScreenOrders(dates):
+def clean_DF_screenOrders(df, dates):
     start_date, end_date = dates
-
-    def removeBadChar(x):
-        if isinstance(x, str):
-            x=x.replace('"','').replace('=','')
-        return x
-
-    while True:
-        try:
-            filename = askopenfilename(initialdir = 'C:/Users/loren/Documents/ucsf_sra/msg_recharge_automation/screenOrders',
-                title = "Select screenOrders file (.csv or .tsv only)")
-            path = filename #change to file name
-
-            if not(filename): # empty file name occurs when user tries to close input window
-                raise SystemExit()
-            elif filename.endswith('.tsv'):
-                df = pd.read_csv(path, delimiter="\t")
-                break
-            elif filename.endswith('.txt'):
-                df = pd.read_csv(path, delimiter="\t")
-                break
-            elif filename.endswith('.csv'):
-                df = pd.read_csv(path, delimiter=",")
-                break
-            else:
-                raise UserException
-        except UserException as e:    
-            print('\nWrong file type selected (ONLY .csv or .tsv files)')
-
-    print("\nSelected:\n" + filename +"\n")
-    # make 'Date Requested' the index
-    df = df.applymap(removeBadChar) #removes unwanted " and = character
-    df.rename(removeBadChar,axis='columns',inplace=True)
-    df.rename(index=str, columns={"Spend Tracking Code": "Group",
-        "Total Price":"Screens Total Cost"}
-        ,inplace=True)
-    df.index = pd.to_datetime(df.pop('Date Requested')) # Change index to datetime index
+    df.rename(columns={
+        'Lab' : 'Group',
+        'Name' : 'Requested By',
+        'SKU' : 'Item Name',
+        'Price' : 'Unit Price',
+        'Total price' : 'Screens Total Cost',
+        }, inplace=True)
+    df.index = pd.to_datetime(df.pop('Date'))
     df = df[df.index.notnull()]
+    print(df)
     mask = (df.index > start_date) & (df.index <= end_date)
     # df = df.loc[start_date:end_date]
     df = df.loc[mask]
+    
     df['Group'] = df['Group'].map(lambda s: s.lower()) #make group name lowercase to standardize
-    df.sort_values(['Group'],inplace=True)
+
     return df
+
+# def getScreenOrders(dates):
+#     start_date, end_date = dates
+
+#     def removeBadChar(x):
+#         if isinstance(x, str):
+#             x=x.replace('"','').replace('=','')
+#         return x
+
+#     while True:
+#         try:
+#             filename = askopenfilename(initialdir = 'C:/Users/loren/Documents/ucsf_sra/msg_recharge_automation/screenOrders',
+#                 title = "Select screenOrders file (.csv or .tsv only)")
+#             path = filename #change to file name
+
+#             if not(filename): # empty file name occurs when user tries to close input window
+#                 raise SystemExit()
+#             elif filename.endswith('.tsv'):
+#                 df = pd.read_csv(path, delimiter="\t")
+#                 break
+#             elif filename.endswith('.txt'):
+#                 df = pd.read_csv(path, delimiter="\t")
+#                 break
+#             elif filename.endswith('.csv'):
+#                 df = pd.read_csv(path, delimiter=",")
+#                 break
+#             else:
+#                 raise UserException
+#         except UserException as e:    
+#             print('\nWrong file type selected (ONLY .csv or .tsv files)')
+
+    # print("\nSelected:\n" + filename +"\n")
+    # # make 'Date Requested' the index
+    # df = df.applymap(removeBadChar) #removes unwanted " and = character
+    # df.rename(removeBadChar,axis='columns',inplace=True)
+    # df.rename(index=str, columns={"Spend Tracking Code": "Group",
+    #     "Total Price":"Screens Total Cost"}
+    #     ,inplace=True)
+    # df.index = pd.to_datetime(df.pop('Date Requested')) # Change index to datetime index
+    # df = df[df.index.notnull()]
+    # mask = (df.index > start_date) & (df.index <= end_date)
+    # # df = df.loc[start_date:end_date]
+    # df = df.loc[mask]
+    # df['Group'] = df['Group'].map(lambda s: s.lower()) #make group name lowercase to standardize
+    # df.sort_values(['Group'],inplace=True)
+    # return df
 
 def getRockImagerUsage(dates):
     start_date, end_date = dates
@@ -220,6 +245,7 @@ def getRockImagerUsage(dates):
     mask = (df.index > start_date) & (df.index <= end_date)
     # df = df.loc[start_date:end_date]
     df = df.loc[mask]
+    df['Group'] = df['Group'].astype(str).map(lambda s: s.lower()) #make group name lowercase to standardize
     return df
 
 def getGL(dates):
@@ -289,7 +315,7 @@ def getFilesByPI(df_lst,pth_lst,PI_lst,direc):
 
 def calculateRecharge(dfs,date_range):
     start_date,end_date = date_range[0],date_range[1]
-    df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1, df_RockImager_2, df_GL, df_ScreenOrders = dfs
+    df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1, df_RockImager_2, df_GL, df_screenOrders = dfs
     coreMultl = 1.0
     coreFacilityFee = 650
 
@@ -301,13 +327,11 @@ def calculateRecharge(dfs,date_range):
     costHDP = 1.16 #greiner 96 well hanging drop plate
     costSDP = 9.20 #swis mrc2 96 well sitting drop plate
 
-    costHDScreen = 25.00
-    costSDScreen = 25.00
     costMosqTip = 0.07
 
     costMosquitoTime = 0.00 #per hr
     costDragonflyTime = 0.00 #per hr
-    costRockImagerTime = 5.00 / 60.0 #per min
+    costRockImagerTime = 5.00 / 60.0 #USD/ min
 
     costHDSConsume = 7.50 #cost of consumables for mosquito hanging drop plate setup (optical seal, micro reservoirs)
     costSDSConsume = 3.89 #cost of consumables for mosquito sitting drop plate setup (optical seal, micro reservoirs)
@@ -386,22 +410,58 @@ def calculateRecharge(dfs,date_range):
     + costHDSConsume*itemizedMosqCryMonthByPI['NumHDP'] + costSDSConsume*itemizedMosqCryMonthByPI['NumSDP'] #needs to be changed eventually 
 
     itemizedMosqCryMonthByPI=itemizedMosqCryMonthByPI.iloc[::-1] #reverse index (descending date)
-
-    wantedSOCol = ['Group','Requested By','Item Name','Qty','Vendor','Unit Price','Screens Total Cost']
-    
-    itemizedSOMonthByPI = df_ScreenOrders.groupby([pd.Grouper(freq="M"),'Group']).apply(lambda x: x.head(
+    wantedSOCol = ['Group','Requested By','Item Name','Qty','Unit Price','Screens Total Cost']
+  
+    itemizedSOMonthByPI = df_screenOrders.groupby([pd.Grouper(freq="M"),'Group']).apply(lambda x: x.head(
         len(x.index)))[wantedSOCol].loc[start_date:end_date]
     itemizedSOMonthByPI = itemizedSOMonthByPI.iloc[::-1]
+
+    users = []
+    usersFee = []
+    for user in allUsers:
+        if user in coreUsers:
+            users.append(user)
+            usersFee.append(coreFacilityFee)
+        if user in associateUsers:
+            users.append(user)
+            usersFee.append(assocFacilityFee)
+
+
+    monthIndex = pd.date_range(start_date,end_date,freq='M')
+    numMonths = len(monthIndex)
+    lenUsers = len(users)
+    users = users *numMonths
+    usersFee = usersFee *numMonths
+    ind = []
+    for m in monthIndex:
+        start = datetime(m.year, m.month, 1) #dummy date
+        end = datetime(m.year,m.month,10) #dummy date
+
+        td = end - start
+        delta = td // len(users)
+
+        for k in range(lenUsers):
+            ind.append(start)
+            start += delta
+
+
+
+    df_facFee = pd.DataFrame(index = ind, columns = ['Group','Facility Fee'])
+    df_facFee.index = pd.to_datetime(df_facFee.index)
+    df_facFee['Group'] = users
+    df_facFee['Facility Fee'] = usersFee
+    df_facFee = df_facFee.groupby([pd.Grouper(freq="M"),'Group']).sum(level=[0,1],numeric_only=True)
+
 
     a = itemizedMosqCryMonthByPI.sum(level=[0,1],numeric_only=True)[['NumHDP','NumSDP','Mosq Tips','Mosquito Total Cost']]
     b_1 = itemizedRockMonthByPI_1.sum(level=[0,1],numeric_only=True)[['Rock Dur (min)','RockImager Total Cost']]
     b_2 = itemizedRockMonthByPI_2.sum(level=[0,1],numeric_only=True)[['Rock Dur (min)','RockImager Total Cost']]
     c = itemizedSOMonthByPI.sum(level=[0,1],numeric_only=True)['Screens Total Cost']
-    d = itemizedDFlyMonthByPI.sum(level=[0,1],numeric_only=True)[['DFly Total Cost']]
+    d = itemizedDFlyMonthByPI.sum(level=[0,1],numeric_only=True)['DFly Total Cost']
 
     b = (b_1.add(b_2,fill_value=0))
 
-    monthlyRechargeTotal = pd.concat([a,b,c,d], axis=1).fillna(0)
+    monthlyRechargeTotal = pd.concat([a,b,c,d,df_facFee], axis=1).fillna(0)
     monthlyRechargeTotal['Raw Usage'] = (monthlyRechargeTotal['NumSDP']+monthlyRechargeTotal['NumHDP'])*10 \
     + monthlyRechargeTotal['Rock Dur (min)']
      # + monthlyRechargeTotal['Rock Dur (min)'] + monthlyRechargeTotal['DFly New Plates Set-up']*25 #might need to redefine to better definition
@@ -419,28 +479,37 @@ def calculateRecharge(dfs,date_range):
 
     lst_monthlyExpenses = []
     lst_payroll = []
+    # adj_lst_payroll = []
     for index, row in monthlyRechargeTotal.iterrows():
-        lst_monthlyExpenses.append(row['Usage prop'] * df_GL_monthlyExpenses.loc[index[0]]['Actual'])
-
-    for index, row in monthlyRechargeTotal.iterrows():
-        lst_payroll.append(row['Usage prop'] * df_GL_payroll.loc[index[0]]['Actual'])
+        if (index[0] in df_GL_monthlyExpenses.index):
+            # do the stuff
+            lst_monthlyExpenses.append(row['Usage prop'] * df_GL_monthlyExpenses.loc[index[0]]['Actual'])
+            lst_payroll.append(row['Usage prop'] * df_GL_payroll.loc[index[0]]['Actual'])
+            # adj_lst_payroll.append(row['Usage prop'] * df_GL_payroll.loc[index[0]]['Actual']
+                # *)
+        else:
+            lst_monthlyExpenses.append(0)
+            lst_payroll.append(0)
+            # adj_lst_payroll.append(0)
 
     monthlyRechargeTotal['Month Dist. Cost'] = lst_monthlyExpenses  #distributed costs include everything except pay-per-use consumables and base salary/benefits
     monthlyRechargeTotal['Payroll Cost'] = lst_payroll #payroll costs for that month
+    sumPayroll = sum(lst_payroll)
+
     monthlyRechargeTotal['Use Multiplier'] = regMult
-    monthlyRechargeTotal['Facility Fee'] = 0
-    
+
+
     # Set Use Multiplier column and payments for Core and Assoc users
     monthlyRechargeTotal.loc[((monthlyRechargeTotal.index.levels[0],
         coreUsers),'Use Multiplier')] = coreMultl
-    monthlyRechargeTotal.loc[((monthlyRechargeTotal.index.levels[0],
-        coreUsers),'Facility Fee')] = coreFacilityFee
+    # monthlyRechargeTotal.loc[((monthlyRechargeTotal.index.levels[0],
+    #     coreUsers),'Facility Fee')] = coreFacilityFee
 
     monthlyRechargeTotal.loc[((monthlyRechargeTotal.index.levels[0],
         associateUsers),'Use Multiplier')] = assocMult
-    monthlyRechargeTotal.loc[((monthlyRechargeTotal.index.levels[0],
-        associateUsers),'Facility Fee')] = assocFacilityFee
-
+    # monthlyRechargeTotal.loc[((monthlyRechargeTotal.index.levels[0],
+    #     associateUsers),'Facility Fee')] = assocFacilityFee
+    
     monthlyRechargeTotal['Total Charge'] = (monthlyRechargeTotal['Month Dist. Cost'] 
         + monthlyRechargeTotal['Mosquito Total Cost'] + monthlyRechargeTotal['RockImager Total Cost']
         + monthlyRechargeTotal['DFly Total Cost'])\
@@ -476,7 +545,8 @@ if __name__ == '__main__':
     while 1:
         try:    
             start_date = datetime.strptime(input('Enter Start date in the format yyyy-m-d: '), '%Y-%m-%d')
-            end_date = datetime.strptime(input('Enter End date in the format yyyy-m-d: '), '%Y-%m-%d')
+            end_date = datetime.strptime(input('Enter End date in the format yyyy-m-d: ')  + '-23-59-59'
+                , '%Y-%m-%d-%H-%M-%S')
             if (start_date>end_date):
                 raise ValueError
             break
@@ -488,13 +558,14 @@ if __name__ == '__main__':
     print('The dates selected are: ' + dates[0] + ' to ' + dates[1])
     gc = pyg.authorize(service_file='msg-Recharge-24378e029f2d.json')
     coreUsers, associateUsers, regUsers, allUsers = getPITypes()
-    df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog = getGDriveLogUsage(dates)
+    df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_screenOrders = getGDriveLogUsage(dates)
     df_RockImager_1 = getRockImagerUsage(dates)
     df_RockImager_2 = getRockImagerUsage(dates)
-
+    print('inside main function')
+    print(df_screenOrders)
     df_GL = getGL(dates)
-    df_ScreenOrders = getScreenOrders(dates)
-    dfs_input = [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1,df_RockImager_2, df_GL, df_ScreenOrders]
+    # df_ScreenOrders = getScreenOrders(dates)
+    dfs_input = [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1,df_RockImager_2, df_GL, df_screenOrders]
     rechargeSummary, fileOut_lst, dfOut_lst = calculateRecharge(dfs_input,[start_date,end_date])
     #Path to be added eventually --> C:\Users\loren\Google Drive\ljiang\xrayFacilityRecharge\monthlyRecharges 
     directory = 'monthlyRechargesTemp/' + str(start_date)[0:10]+'_TO_'+str(end_date)[0:10] + '/'
