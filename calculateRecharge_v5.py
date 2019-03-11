@@ -524,7 +524,7 @@ if __name__ == '__main__':
                 df_RockImager_1,df_RockImager_2, df_GL, df_screenOrders]
     rechargeSummary, fileOut_lst, dfOut_lst = calculateRecharge(dfs_input,[start_date,end_date])
     directory = 'monthlyRechargesTemp/' + str(start_date)[0:10]+'_TO_'+str(end_date)[0:10] + '/'
-    rechargeSummary.to_pickle('testPickle.pkl')
+
     if not os.path.exists(directory):
         os.makedirs(directory)
         getFilesByPI(dfOut_lst,fileOut_lst,allUsers,directory)
