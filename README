@@ -6,18 +6,18 @@
 
 * **Mosquito Total Cost //** The total cost of Mosquito usage. See `[your_lab]` -> `mosquitoUsage[date_range].xlsx`
 
-* **RockImager Total Cost //** The total cost of RockImagers usage. See [your_lab]>20c_rockImagerUsage[date_range].xlsx and [your_lab]>4c_rockImagerUsage[date_range].xlsx
+* **RockImager Total Cost //** The total cost of RockImagers usage. See `[your_lab]` -> `20c_rockImagerUsage[date_range].xlsx` and `[your_lab]` -> `4c_rockImagerUsage[date_range].xlsx`
 
-* **DFly Total Cost //** The total cost of Dragonfly usage. See [your_lab]>dragonflyUsage[date_range].xlsx
+* **DFly Total Cost //** The total cost of Dragonfly usage. See `[your_lab]` -> `dragonflyUsage[date_range].xlsx`
 
 * **Raw Usage //** The raw usage (min) of all equipment taken from log files. 
 
 * **Usage prop //** The sum of your lab's usage divided by all lab's usage.
 
-* **Month Dist. Cost //** Non amortized facility expenses (liquid N2, computing licenses, etc) calculated by Usage prop x Use Multiplier x Total distributed cost
+* **Month Dist. Cost //** Non amortized facility expenses (liquid N2, computing licenses, etc) calculated by `Usage prop` x `Use Multiplier` x `Total distributed cost`
 
-* **Payroll Cost //** (Total payroll cost - total facility fee) * Usage prop. if total payroll cost > total facility fee
+* **Payroll Cost //** `(Total payroll cost - total facility fee)` x `Usage prop.` if `Total payroll cost` > `Total facility fee`
 
-* **Use Multiplier //** Use Multiplier of your lab's  User Type.
+* **Use Multiplier //** Use Multiplier of your lab's User Type.
 
-* **Total Charge//** (Month Dist. Cost + Mosquito Total Cost + RockImager Total Cost + DFly Total Cost) x Use Multiplier + Screens Total Cost + Payroll Cost
+* **Total Charge//** `(Month Dist. Cost + Mosquito Total Cost + RockImager Total Cost + DFly Total Cost)` x `Use Multiplier` + `Screens Total Cost` + `Payroll Cost`
