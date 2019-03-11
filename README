@@ -4,7 +4,7 @@
 
 * **Screens Total Costs //** Total cost of ordered crystallization screens. 
 
-* **Mosquito Total Cost //** The total cost of Mosquito usage. See [your_lab]>mosquitoUsage[date_range].xlsx
+* **Mosquito Total Cost //** The total cost of Mosquito usage. See `[your_lab]` -> `mosquitoUsage[date_range].xlsx`
 
 * **RockImager Total Cost //** The total cost of RockImagers usage. See [your_lab]>20c_rockImagerUsage[date_range].xlsx and [your_lab]>4c_rockImagerUsage[date_range].xlsx
 
