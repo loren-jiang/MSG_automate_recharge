@@ -258,41 +258,54 @@ def getFilesByPI(df_lst,pth_lst,PI_lst,direc):
 
                 exportToFile(makeExcelFriendly(a),pi_folder+pth)
 
+#takes in currency as str and converts to float
+def currencyToFloat(s):
+    return np.float(s.replace('$', ''))
+
+def getCellByRowCol(df, rowHeader, rowSelector, colSelector):
+        return df.loc[df[rowHeader]==rowSelector][colSelector].to_numpy()[0]
+
 def calculateRecharge(dfs,date_range):
     start_date,end_date = date_range[0],date_range[1]
-    df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1, df_RockImager_2, df_GL, df_screenOrders = dfs
+    [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1, 
+        df_RockImager_2, df_GL, df_screenOrders, df_rechargeConst] = dfs
     
-    rechargeDict = [
-                    'Prealiquoted hanging drop commerical screen',
-                    'Prealiquoted sitting drop commerical screen',
-                    '96-well Greiner Hanging drop plate',
-                    'MRC2 Sitting drop plate',
-                    'HD Consumables',
-                    'SD Consumables',
-                    'Spool of mosquito tips 9 mm pitch',
-                    'Pack of 100 dragonfly tips',
-                    'Reservoir dragonfly',
-                    'RockImager time',
-                    'Mosquito time',
-                    'Dragonfly time',
-                    'Assoc use multiplier',
-                    'Core use multiplier',
-                    'Regular use multiplier',
-                    'Assoc facility fee',
-                    'Core facility fee',
-                    'Regular facility fee']
+    # rechargeDict = [
+    #                 'Prealiquoted hanging drop commerical screen',
+    #                 'Prealiquoted sitting drop commerical screen',
+    #                 '96-well Greiner Hanging drop plate',
+    #                 'MRC2 Sitting drop plate',
+    #                 'HD Consumables',
+    #                 'SD Consumables',
+    #                 'Spool of mosquito tips 9 mm pitch',
+    #                 'Pack of 100 dragonfly tips',
+    #                 'Reservoir dragonfly',
+    #                 'RockImager time',
+    #                 'Mosquito time',
+    #                 'Dragonfly time',
+    #                 'Assoc use multiplier',
+    #                 'Core use multiplier',
+    #                 'Regular use multiplier',
+    #                 'Assoc facility fee',
+    #                 'Core facility fee',
+    #                 'Regular facility fee']
 
     def findRechargeConst(rowSelector, colSelector):
         return np.float(df_rechargeConst.loc[df_rechargeConst['Item']==rowSelector][colSelector]\
                 .values[0].replace('$', '',))
-    # df_rechargeConst = df_rechargeConst.loc[df_rechargeConst['Item'].isin(rechargeStrs)]
 
-    coreMultl = findRechargeConst('Core use multiplier','Price') #1.0
+    # getCellByRowCol(df, rowHeader, rowSelector, colSelector)
+    # coreMultl = currencyToFloat(getCellByRowCol(df_rechargeConst, "Item", "Core use multiplier", "Price"))
+    # coreFacilityFee = currencyToFloat(getCellByRowCol(df_rechargeConst, "Item",'Core facility fee','Price')) #650
+    # assocMult = currencyToFloat(getCellByRowCol(df_rechargeConst, "Item",'Assoc use multiplier','Price'))
+    # assocFacilityFee = currencyToFloat(getCellByRowCol(df_rechargeConst, "Item",'Assoc facility fee','Price'))
+    # regMult = currencyToFloat(getCellByRowCol(df_rechargeConst, "Item",'Regular use multiplier','Price'))
+    # regFacilityFee = currencyToFloat(getCellByRowCol(df_rechargeConst, "Item",'Regular facility fee','Price'))
+
+    coreMultl = findRechargeConst("Core use multiplier", "Price")
     coreFacilityFee = findRechargeConst('Core facility fee','Price') #650
-
     assocMult = findRechargeConst('Assoc use multiplier','Price')
     assocFacilityFee = findRechargeConst('Assoc facility fee','Price')
-
     regMult = findRechargeConst('Regular use multiplier','Price')
     regFacilityFee = findRechargeConst('Regular facility fee','Price')
 
@@ -520,8 +533,8 @@ if __name__ == '__main__':
     df_GL = getGL(dates)
     df_rechargeConst = getRechargeConst()
 
-    dfs_input = [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, 
-                df_RockImager_1,df_RockImager_2, df_GL, df_screenOrders]
+    dfs_input = [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1,
+                    df_RockImager_2, df_GL, df_screenOrders, df_rechargeConst]
     rechargeSummary, fileOut_lst, dfOut_lst = calculateRecharge(dfs_input,[start_date,end_date])
     directory = 'monthlyRechargesTemp/' + str(start_date)[0:10]+'_TO_'+str(end_date)[0:10] + '/'
 
