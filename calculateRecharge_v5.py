@@ -198,7 +198,7 @@ def getRockImagerUsage(dates):
 
 def getGL(dates):
     df = gc.open_by_key('1L610loj5s41wQFYFnzNafI2OeY9kxL0WuPwebtW5k3Q').sheet1.get_as_df()
-
+    df['Actual'] = pd.to_numeric(df['Actual'], errors='coerce').fillna(0)
     start_date, end_date = dates
 
     # categories of charges; should be lower case
@@ -433,7 +433,7 @@ def calculateRecharge(dfs,date_range):
 
     df_GL_monthlyExpenses=df_GL[df_GL['Recharge Category'] == 'monthlyExpenses'].groupby(
         [pd.Grouper(freq="M")]).sum().loc[start_date:end_date]
-
+    
     df_GL_payroll = df_GL[df_GL['Recharge Category'] == 'payroll'].groupby(
         [pd.Grouper(freq="M")]).sum().loc[start_date:end_date]
 
