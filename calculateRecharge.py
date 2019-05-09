@@ -6,7 +6,7 @@ import numpy as np
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 from tkinter.filedialog import askopenfilename
-
+import shutil
 
 class UserException(Exception):
     pass    
@@ -240,7 +240,7 @@ def exportToFile(df, pth, fileExt='.xlsx'):
         print("fileExt needs to be '.csv' or '.xlsx'")
     else:
         if (fileExt == '.csv'):
-            df.to_csv(pth+fileExt,freeze_panes=(1,1))
+            df.to_csv(pth+fileExt)
         else:
             df.to_excel(pth+fileExt,freeze_panes=(1,1)) 
 
