@@ -52,11 +52,20 @@ Recharge is to be done monthly. Finance department (La-Risa Lewis, La-Risa.Lewis
     * Note, although not recommended, you can also directly enter the GL and DPE data into `collatedGL_DPE` Google sheet, but be sure to format cell values accordingly.
 * [2] Get 4C and 20C RockImager logs
   * Go to each imager's computer and get the event log file by:
-    * blah
-    * blah
+    * `File` --> `Reports` --> `Event log`
+    * Specify the date range for the month of interest (e.g. Aug 2018 would be 8/1/2018 and 9/1/2018).
    * Appropriately name the .txt which should ideally comma-delimited and put into corresponding folder `My Drive > ljiang > xrayFacilityRecharge > equipmentLogs > RockImagerEventLogs > rockImager 4C / rockImager 20C`
 * [3] Run python script
-  * Run the python script `calculateRecharge_v5.py` from cmd or terminal and enter date range desised. For e.g., if the recharge is for July 2018, you would enter 2018-7-1 as the start date and 2018-8-1 as the end date.
+  * Run the python script `calculateRecharge.py` (see section "calculateRecharge.py details" for notes) from cmd or terminal and enter date range desised. For e.g., if the recharge is for July 2018, you would enter 2018-7-1 as the start date and 2018-8-1 as the end date.
   * If successful, the script will take usage logs from the Mosquito(s), RockImagers, Dragonfly, and online screen orders and spit out itemized spreadsheets per lab in a directory named accordingly to the date range entered.
   * Take this folder and upload it to the parent folder named `xrayFacilityRecharge > monthlyRecharge`.
   * Lastly, send the `rechargeSummary[date_range].xlsx` to the finance dept. (La-Risa.Lewis.ucsf.edu). 
+
+## calculateRecharge.py details:
+* Python (ver. 3.6.3) packages used (as of 6/12/19) -- may work on other versions as well. If missing anything, then a pip install should do the trick. 
+  * pandas (ver. 0.23.4)
+  * pygsheets (ver. 2.0.1)
+  * numpy (ver. 1.5.4)
+  * oauth2client (ver. 4.1.3)
+
+* The script needs to take in `msg-Recharge-24378e029f2d.json` in order to authorize access to the Google sheets needed. Make sure this file exists; otherwise, you will have to generate a new json file.
