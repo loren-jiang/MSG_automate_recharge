@@ -38,7 +38,7 @@ The main takeaways of these changes are:
 
 * **Use Multiplier //** Use Multiplier of your lab's User Type.
 
-* **Total Charge//** `(Month Dist. Cost + Mosquito Total Cost + RockImager Total Cost + DFly Total Cost)` x `Use Multiplier` + `Screens Total Cost` + `Payroll Cost + Facility Fee`
+* **Total Charge//** `(Month Dist. Cost + Mosquito Total Cost + RockImager Total Cost + DFly Total Cost)` x `Use Multiplier` + `Screens Total Cost` + `Payroll Cost` + `Facility Fee`
 
 ---
 
