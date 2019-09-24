@@ -527,7 +527,7 @@ if __name__ == '__main__':
 
     dates = [str(start_date),str(end_date)]
     print('The dates selected are: ' + dates[0] + ' to ' + dates[1])
-    gc = pyg.authorize(service_file='msg-Recharge-24378e029f2d.json')
+    gc = pyg.authorize(service_file='../msg-Recharge-24378e029f2d.json')
     coreUsers, associateUsers, regUsers, allUsers = getPITypes()
     df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_screenOrders = getGDriveLogUsage(dates)
     df_RockImager_1 = getRockImagerUsage(dates)
