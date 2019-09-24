@@ -197,9 +197,10 @@ def getRockImagerUsage(dates):
     return df
 
 def getGL(dates):
-    df_sheet = gc.open_by_key('1L610loj5s41wQFYFnzNafI2OeY9kxL0WuPwebtW5k3Q').sheet1
-    import pdb; pdb.set_trace();
-    df = df_sheet.get_as_df(end=(df_sheet.rows, 4))
+    df = gc.open_by_key('1L610loj5s41wQFYFnzNafI2OeY9kxL0WuPwebtW5k3Q').sheet1.get_as_df()
+    # df_sheet = gc.open_by_key('1L610loj5s41wQFYFnzNafI2OeY9kxL0WuPwebtW5k3Q').sheet1
+    # import pdb;pdb.set_trace();
+    # df = df_sheet.get_as_df(end=(df_sheet.rows, 4))
     df['Actual'] = pd.to_numeric(df['Actual'], errors='coerce').fillna(0)
     start_date, end_date = dates
 
@@ -531,14 +532,14 @@ if __name__ == '__main__':
     df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_screenOrders = getGDriveLogUsage(dates)
     df_RockImager_1 = getRockImagerUsage(dates)
     df_RockImager_2 = getRockImagerUsage(dates)
-    import pdb; pdb.set_trace();
+    # import pdb;pdb.set_trace();
     df_GL = getGL(dates)
     df_rechargeConst = getRechargeConst()
-    import pdb; pdb.set_trace();
+    # import pdb;pdb.set_trace();
     dfs_input = [df_mosquitoLog, df_mosquitoLCPLog, df_dragonflyLog, df_RockImager_1,
                     df_RockImager_2, df_GL, df_screenOrders, df_rechargeConst]
     rechargeSummary, fileOut_lst, dfOut_lst = calculateRecharge(dfs_input,[start_date,end_date])
-    directory = 'monthlyRechargesTemp/' + str(start_date)[0:10]+'_TO_'+str(end_date)[0:10] + '/'
+    directory = '../monthlyRechargesTemp/' + str(start_date)[0:10]+'_TO_'+str(end_date)[0:10] + '/'
 
     if not os.path.exists(directory):
         os.makedirs(directory)
