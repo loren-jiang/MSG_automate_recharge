@@ -206,7 +206,7 @@ def getGL(dates):
 
     # categories of charges; should be lower case
     amortizedExpenses = ['voucher']
-    voucherExecptions = ['airgas']
+    voucherExceptions = ['airgas', 'vpl', 'vantage point logistics', 'cdw-government']
     monthlyExpenses = ['recharge']
     payroll = ['payroll']
 
@@ -223,7 +223,7 @@ def getGL(dates):
     df = df.loc[mask]
     df['Recharge Category'] = df[['TrnsTyp', 'Description']].apply(lambda s: 'amortizedExpenses' 
         if substringInListOfStrings(str(s[0]).lower(), amortizedExpenses) and \
-            not(substringInListOfStrings(str(s[1]).lower(), voucherExecptions)) \
+            not(substringInListOfStrings(str(s[1]).lower(), voucherExceptions)) \
             else ('payroll' if substringInListOfStrings(str(s[0]).lower(), payroll)
                 else 'monthlyExpenses'), axis = 1)
 
